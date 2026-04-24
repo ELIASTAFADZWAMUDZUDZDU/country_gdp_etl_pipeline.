@@ -1,0 +1,8 @@
+__pycache__/
+*.py[cod]
+
+# Local outputs
+FINAL.db
+data/*.csv
+data/.~lock.*
+logs/*.txt
