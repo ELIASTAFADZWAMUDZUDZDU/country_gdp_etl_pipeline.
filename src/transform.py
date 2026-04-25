@@ -1,7 +1,22 @@
 import time
 import requests
 
+from src.config import FX_API_URL, FX_FALLBACK_RATES
 from src.logger import log, time_log
+
+
+def get_exchange_rates() -> dict:
+    rates = FX_FALLBACK_RATES.copy()
+    try:
+        response = requests.get(FX_API_URL, timeout=10)
+        response.raise_for_status()
+        payload = response.json()
+        rates["GBP"] = float(payload["rates"]["GBP"])
+        rates["EUR"] = float(payload["rates"]["EUR"])
+        rates["INR"] = float(payload["rates"]["INR"])
+    except (requests.RequestException, KeyError, TypeError, ValueError):
+        log("FX API unavailable or invalid response, using fallback rates")
+    return rates
 
 
 def transform_data(df):
@@ -9,24 +24,12 @@ def transform_data(df):
     start = time.perf_counter()
 
     df = df.copy()
-
-    # fallback values if FX API fails
-    GBP = 0.79
-    EUR = 0.92
-    INR = 83.0
-
-    try:
-        r = requests.get("https://api.exchangerate-api.com/v4/latest/USD", timeout=10).json()
-        GBP = r["rates"]["GBP"]
-        EUR = r["rates"]["EUR"]
-        INR = r["rates"]["INR"]
-    except requests.RequestException:
-        log("FX API unavailable, using fallback rates")
+    rates = get_exchange_rates()
 
     df["GDP_USD_BILLION"] = (df["GDP_MILLION"] / 1000).round(2)
-    df["GDP_GBP_BILLION"] = (df["GDP_USD_BILLION"] * GBP).round(2)
-    df["GDP_EUR_BILLION"] = (df["GDP_USD_BILLION"] * EUR).round(2)
-    df["GDP_INR_BILLION"] = (df["GDP_USD_BILLION"] * INR).round(2)
+    df["GDP_GBP_BILLION"] = (df["GDP_USD_BILLION"] * rates["GBP"]).round(2)
+    df["GDP_EUR_BILLION"] = (df["GDP_USD_BILLION"] * rates["EUR"]).round(2)
+    df["GDP_INR_BILLION"] = (df["GDP_USD_BILLION"] * rates["INR"]).round(2)
 
     time_log("TRANSFORMATION", start)
     return df

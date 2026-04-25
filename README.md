@@ -2,9 +2,18 @@
 
 Simple Python ETL pipeline that extracts GDP data, transforms it into multiple currencies, and loads results to CSV and SQLite.
 
+## Key Improvements
+
+- Centralized project configuration in `src/config.py`.
+- More resilient extraction with safer GDP parsing and HTML-table validation.
+- Better FX-rate handling with API validation and fallback-rate safety.
+- Reliable output writes (auto-create `data/` and `logs/` directories).
+- Cleaner database interactions using context managers and parameterized query thresholds.
+
 ## Project Structure
 
 - `main.py` - Orchestrates the ETL flow.
+- `src/config.py` - Shared constants (URLs, output paths, fallback rates).
 - `src/extract.py` - Extracts country GDP data from the archived Wikipedia page.
 - `src/transform.py` - Converts GDP values into USD/GBP/EUR/INR (billions).
 - `src/load.py` - Writes final dataset to CSV.
@@ -38,3 +47,4 @@ python main.py
 
 - The extractor uses HTTPS verification by default.
 - The transformation step uses fallback FX rates if the exchange-rate API is unavailable.
+- Log/output folders are created automatically when missing.
